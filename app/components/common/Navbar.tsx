@@ -17,7 +17,7 @@ const Navbar = () => {
         </Link>
 
         {/* Nav Links */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+        <nav className="hidden md:flex items-center gap-8 text-base text-black font-bold">
           <Link href="/find-doctors" className="hover:text-blue-600 transition">
             Find Doctors
           </Link>

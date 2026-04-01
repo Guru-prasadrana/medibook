@@ -1,3 +1,8 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { Filter } from "lucide-react";
+
 type Props = {
   specialties: string[];
   selected: string;
@@ -11,22 +16,15 @@ export default function DoctorFilters({
 }: Props) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-gray-400">
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
-      </span>
+      {/* Icon */}
+      <Filter className="h-4 w-4 text-muted-foreground" />
 
+      {/* Filters */}
       {["All", ...specialties].map((s) => (
-        <button
+        <Button
           key={s}
+          variant={selected === s ? "default" : "outline"}
+          size="sm"
           onClick={() => onSelect(s)}
           className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
             selected === s
@@ -35,7 +33,7 @@ export default function DoctorFilters({
           }`}
         >
           {s}
-        </button>
+        </Button>
       ))}
     </div>
   );
