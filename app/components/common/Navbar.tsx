@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Calendar, Stethoscope } from "lucide-react";
+import { Calendar, Stethoscope, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import SignInModal from "./SignInModal";
 import {
   AlertDialog,
@@ -17,12 +18,36 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Navbar = () => {
+  const router = useRouter();
   const [signInOpen, setSignInOpen] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
 
-  const handleProtectedClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setAlertOpen(true);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return !!localStorage.getItem("user_id");
+  });
+
+  const handleSignInModalClose = (open: boolean) => {
+    setSignInOpen(open);
+    if (!open) {
+      const userId = localStorage.getItem("user_id");
+      setIsLoggedIn(!!userId);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user_id");
+    setIsLoggedIn(false);
+    router.push("/"); // ✅ redirect to home after logout
+  };
+
+  // ✅ Shared guard — navigates if logged in, shows alert if not
+  const handleProtectedClick = (path: string) => {
+    if (isLoggedIn) {
+      router.push(path);
+    } else {
+      setAlertOpen(true);
+    }
   };
 
   const handleAlertConfirm = () => {
@@ -46,8 +71,9 @@ const Navbar = () => {
 
           {/* Nav Links */}
           <nav className="hidden md:flex items-center gap-8 text-base font-bold">
+            {/* ✅ Logged in → /find-doctors | Logged out → show sign in alert */}
             <button
-              onClick={handleProtectedClick}
+              onClick={() => handleProtectedClick("/find-doctors")}
               className="hover:text-blue-600 transition-colors"
             >
               Find Doctors
@@ -71,15 +97,26 @@ const Navbar = () => {
 
           {/* Right Side */}
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSignInOpen(true)}
-              className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-            >
-              Sign In
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-red-500 transition-colors font-medium"
+              >
+                <LogOut size={15} />
+                Logout
+              </button>
+            ) : (
+              <button
+                onClick={() => setSignInOpen(true)}
+                className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
+              >
+                Sign In
+              </button>
+            )}
 
+            {/* ✅ Logged in → /find-doctors | Logged out → show sign in alert */}
             <Button
-              onClick={handleProtectedClick}
+              onClick={() => handleProtectedClick("/find-doctors")}
               className="bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-full px-5"
             >
               Book Now
@@ -95,7 +132,6 @@ const Navbar = () => {
           style={{ borderRadius: "20px", maxWidth: "400px" }}
         >
           <div className="bg-gradient-to-br from-blue-50 to-cyan-50 px-8 pt-8 pb-6">
-            {/* Icon */}
             <div
               className="flex items-center justify-center mx-auto mb-5"
               style={{
@@ -134,8 +170,7 @@ const Navbar = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Sign In Modal */}
-      <SignInModal open={signInOpen} setOpen={setSignInOpen} />
+      <SignInModal open={signInOpen} setOpen={handleSignInModalClose} />
     </>
   );
 };

@@ -18,6 +18,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sendOtpApi, verifyOtpApi } from "@/lib/services/auth.api";
 
 type Props = {
   open: boolean;
@@ -32,19 +33,37 @@ export default function SignInModal({ open, setOpen }: Props) {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
 
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
     if (phone.length < 10) return;
-    setStep("sending");
-    setTimeout(() => setStep("otp"), 2000);
+    try {
+      setStep("sending");
+      await sendOtpApi(phone);
+      setStep("otp");
+    } catch (error) {
+      console.error(error);
+      setStep("phone");
+      alert("Failed to send OTP");
+    }
   };
 
-  const handleVerify = () => {
-    if (otp.length < 6) return;
-    setStep("success");
+  const handleVerify = async () => {
+    if (otp.length < 4) return;
+    try {
+      // ✅ Capture returned data { message, user_id }
+      const data = await verifyOtpApi(phone, otp);
+
+      // ✅ Persist user_id so Navbar can detect login state
+      localStorage.setItem("user_id", String(data.user_id));
+
+      setStep("success");
+    } catch (error) {
+      console.error(error);
+      alert("Invalid OTP");
+    }
   };
 
   const handleContinue = () => {
-    handleClose();
+    handleClose(); // ✅ triggers Navbar's handleSignInModalClose → re-checks localStorage
     router.push("/find-doctors");
   };
 
@@ -72,7 +91,6 @@ export default function SignInModal({ open, setOpen }: Props) {
           {/* ── PHONE / SENDING STEP ── */}
           {(step === "phone" || step === "sending") && (
             <>
-              {/* Blue phone icon */}
               <div
                 className="flex items-center justify-center mb-6"
                 style={{
@@ -98,7 +116,6 @@ export default function SignInModal({ open, setOpen }: Props) {
                 Enter your phone number to sign in
               </p>
 
-              {/* Phone Input wrapper — custom border + shadcn Input inside */}
               <div
                 className={cn(
                   "flex items-center w-full bg-white rounded-[14px] px-4 mb-4 h-14 gap-3 transition-all",
@@ -122,7 +139,6 @@ export default function SignInModal({ open, setOpen }: Props) {
                 />
               </div>
 
-              {/* Send OTP Button */}
               <Button
                 onClick={handleSendOtp}
                 disabled={step === "sending" || phone.length < 10}
@@ -158,7 +174,6 @@ export default function SignInModal({ open, setOpen }: Props) {
           {/* ── OTP STEP ── */}
           {step === "otp" && (
             <>
-              {/* Shield icon */}
               <div
                 className="flex items-center justify-center mb-6"
                 style={{
@@ -185,16 +200,15 @@ export default function SignInModal({ open, setOpen }: Props) {
                 </span>
               </p>
 
-              {/* shadcn InputOTP — 6 individual slots */}
               <div className="mb-6">
                 <InputOTP
-                  maxLength={6}
+                  maxLength={4}
                   value={otp}
                   onChange={setOtp}
                   containerClassName="gap-2.5 justify-center"
                 >
                   <InputOTPGroup className="gap-2.5">
-                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                    {[0, 1, 2, 3].map((i) => (
                       <InputOTPSlot
                         key={i}
                         index={i}
@@ -205,13 +219,12 @@ export default function SignInModal({ open, setOpen }: Props) {
                 </InputOTP>
               </div>
 
-              {/* Verify Button */}
               <Button
                 onClick={handleVerify}
-                disabled={otp.length < 6}
+                disabled={otp.length < 4}
                 className={cn(
                   "w-full h-[52px] rounded-[14px] text-base font-semibold text-white border-0 mb-4 transition-all",
-                  otp.length < 6
+                  otp.length < 4
                     ? "bg-gradient-to-r from-[#a8d8f5] to-[#7bbde8] cursor-not-allowed opacity-100"
                     : "bg-gradient-to-r from-[#42b8f5] to-[#1a8fe3] hover:opacity-90",
                 )}
@@ -235,7 +248,6 @@ export default function SignInModal({ open, setOpen }: Props) {
           {/* ── SUCCESS STEP ── */}
           {step === "success" && (
             <>
-              {/* Green check icon */}
               <div
                 className="flex items-center justify-center mb-6"
                 style={{
