@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
+import toast from "react-hot-toast";
 const Navbar = () => {
   const router = useRouter();
   const [signInOpen, setSignInOpen] = useState(false);
@@ -38,6 +38,7 @@ const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem("user_id");
     setIsLoggedIn(false);
+    toast.success("Logged out successfully");
     router.push("/"); // ✅ redirect to home after logout
   };
 
@@ -102,7 +103,7 @@ const Navbar = () => {
                 onClick={handleLogout}
                 className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-red-500 transition-colors font-medium"
               >
-                <LogOut size={15} />
+                <LogOut className="w-4 h-4" />
                 Logout
               </button>
             ) : (

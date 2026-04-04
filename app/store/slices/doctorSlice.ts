@@ -6,9 +6,7 @@ import {
   searchDoctorByLocation,
   getDoctorById,
 } from "@/lib/services/doctor.api";
-// -------------------- THUNKS --------------------
 
-// Get doctors (with specialization)
 export const fetchDoctors = createAsyncThunk(
   "doctor/fetchDoctors",
   async (specialization?: string) => {
@@ -16,7 +14,6 @@ export const fetchDoctors = createAsyncThunk(
   },
 );
 
-// Search by name
 export const fetchDoctorsByName = createAsyncThunk(
   "doctor/fetchDoctorsByName",
   async (name: string) => {
@@ -24,7 +21,6 @@ export const fetchDoctorsByName = createAsyncThunk(
   },
 );
 
-// Search by location
 export const fetchDoctorsByLocation = createAsyncThunk(
   "doctor/fetchDoctorsByLocation",
   async (location: string) => {
@@ -32,7 +28,6 @@ export const fetchDoctorsByLocation = createAsyncThunk(
   },
 );
 
-// Get single doctor
 export const fetchDoctorById = createAsyncThunk(
   "doctor/fetchDoctorById",
   async (id: number) => {
@@ -40,12 +35,11 @@ export const fetchDoctorById = createAsyncThunk(
   },
 );
 
-// -------------------- STATE --------------------
-
 interface DoctorState {
   doctors: Doctor[];
   selectedDoctor: Doctor | null;
-  loading: boolean;
+  loading: boolean; // for list operations
+  loadingById: boolean; // for single doctor fetch
   error: string | null;
 }
 
@@ -53,10 +47,9 @@ const initialState: DoctorState = {
   doctors: [],
   selectedDoctor: null,
   loading: false,
+  loadingById: false,
   error: null,
 };
-
-// -------------------- SLICE --------------------
 
 const doctorSlice = createSlice({
   name: "doctor",
@@ -68,6 +61,7 @@ const doctorSlice = createSlice({
       // 🔹 fetchDoctors
       .addCase(fetchDoctors.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(fetchDoctors.fulfilled, (state, action) => {
         state.loading = false;
@@ -79,18 +73,46 @@ const doctorSlice = createSlice({
       })
 
       // 🔹 search by name
+      .addCase(fetchDoctorsByName.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchDoctorsByName.fulfilled, (state, action) => {
+        state.loading = false;
         state.doctors = action.payload;
+      })
+      .addCase(fetchDoctorsByName.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error searching doctors";
       })
 
       // 🔹 search by location
+      .addCase(fetchDoctorsByLocation.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchDoctorsByLocation.fulfilled, (state, action) => {
+        state.loading = false;
         state.doctors = action.payload;
       })
+      .addCase(fetchDoctorsByLocation.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Error searching by location";
+      })
 
-      // 🔹 get by id
+      // 🔹 get by id — uses loadingById, not loading
+      .addCase(fetchDoctorById.pending, (state) => {
+        state.loadingById = true;
+        state.error = null;
+        state.selectedDoctor = null;
+      })
       .addCase(fetchDoctorById.fulfilled, (state, action) => {
+        state.loadingById = false;
         state.selectedDoctor = action.payload;
+      })
+      .addCase(fetchDoctorById.rejected, (state, action) => {
+        state.loadingById = false;
+        state.error = action.error.message || "Error fetching doctor";
       });
   },
 });
