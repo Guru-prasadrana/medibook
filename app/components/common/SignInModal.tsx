@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { sendOtpApi, verifyOtpApi } from "@/lib/services/auth.api";
+import toast from "react-hot-toast";
 
 type Props = {
   open: boolean;
@@ -39,10 +40,11 @@ export default function SignInModal({ open, setOpen }: Props) {
       setStep("sending");
       await sendOtpApi(phone);
       setStep("otp");
+      toast.success("OTP sent successfully");
     } catch (error) {
       console.error(error);
       setStep("phone");
-      alert("Failed to send OTP");
+      toast.error("Failed to send OTP");
     }
   };
 
@@ -56,15 +58,16 @@ export default function SignInModal({ open, setOpen }: Props) {
       localStorage.setItem("user_id", String(data.user_id));
 
       setStep("success");
+      toast.success("OTP verified successfully");
     } catch (error) {
       console.error(error);
-      alert("Invalid OTP");
+      toast.error("Invalid OTP");
     }
   };
 
   const handleContinue = () => {
     handleClose(); // ✅ triggers Navbar's handleSignInModalClose → re-checks localStorage
-    router.push("/find-doctors");
+    router.push("/");
   };
 
   const handleClose = () => {

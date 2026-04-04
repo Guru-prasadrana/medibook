@@ -1,103 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/app/store";
+import {
+  fetchDoctors,
+  fetchDoctorsByName,
+} from "@/app/store/slices/doctorSlice";
+import { Doctor } from "@/app/types/doctor";
 import DoctorCard from "./DoctorCard";
 import DoctorSearch from "./DoctorSearch";
 import DoctorFilters from "./Filters";
-
-type Doctor = {
-  name: string;
-  specialty: string;
-  rating: number;
-  reviews: number;
-  experience: number;
-  fee: number;
-  slots: string[];
-  available: boolean;
-};
-
-const DOCTORS: Doctor[] = [
-  {
-    name: "Dr. Sarah Chen",
-    specialty: "Cardiology",
-    rating: 4.9,
-    reviews: 234,
-    experience: 15,
-    fee: 120,
-    slots: ["9:00 AM", "10:30 AM", "2:00 PM", "4:00 PM"],
-    available: true,
-  },
-  {
-    name: "Dr. James Wilson",
-    specialty: "Neurology",
-    rating: 4.8,
-    reviews: 189,
-    experience: 12,
-    fee: 150,
-    slots: ["8:00 AM", "11:00 AM", "1:00 PM"],
-    available: true,
-  },
-  {
-    name: "Dr. Priya Patel",
-    specialty: "Dermatology",
-    rating: 4.9,
-    reviews: 312,
-    experience: 8,
-    fee: 100,
-    slots: ["10:00 AM", "12:00 PM", "3:00 PM", "5:00 PM"],
-    available: true,
-  },
-  {
-    name: "Dr. Michael Brown",
-    specialty: "Orthopedics",
-    rating: 4.7,
-    reviews: 156,
-    experience: 20,
-    fee: 180,
-    slots: ["9:30 AM", "2:30 PM"],
-    available: true,
-  },
-  {
-    name: "Dr. Lisa Wang",
-    specialty: "Pediatrics",
-    rating: 5,
-    reviews: 421,
-    experience: 10,
-    fee: 90,
-    slots: ["8:30 AM", "10:00 AM", "1:30 PM", "3:00 PM", "4:30 PM"],
-    available: true,
-  },
-  {
-    name: "Dr. Robert Kim",
-    specialty: "Dentistry",
-    rating: 4.8,
-    reviews: 267,
-    experience: 14,
-    fee: 110,
-    slots: [],
-    available: false,
-  },
-  {
-    name: "Dr. Anna Martinez",
-    specialty: "Ophthalmology",
-    rating: 4.9,
-    reviews: 198,
-    experience: 16,
-    fee: 140,
-    slots: ["9:00 AM", "11:30 AM", "3:00 PM"],
-    available: true,
-  },
-  {
-    name: "Dr. David Lee",
-    specialty: "Cardiology",
-    rating: 4.6,
-    reviews: 345,
-    experience: 22,
-    fee: 200,
-    slots: ["10:00 AM", "2:00 PM"],
-    available: true,
-  },
-];
+import { useCallback } from "react";
 
 const SPECIALTIES = [
   "Cardiology",
@@ -109,22 +23,63 @@ const SPECIALTIES = [
   "Ophthalmology",
 ];
 
+// Debounce helper
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debounced;
+}
+
 export default function FindDoctorPage() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { doctors, loading, error } = useSelector(
+    (state: RootState) => state.doctor,
+  );
+
   const [search, setSearch] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("All");
 
-  const filtered = useMemo(() => {
-    return DOCTORS.filter((doc) => {
-      const matchesSearch =
-        doc.name.toLowerCase().includes(search.toLowerCase()) ||
-        doc.specialty.toLowerCase().includes(search.toLowerCase());
+  const debouncedSearch = useDebounce(search, 400);
 
-      const matchesSpecialty =
-        selectedSpecialty === "All" || doc.specialty === selectedSpecialty;
+  // Fetch all doctors on mount
+  useEffect(() => {
+    dispatch(fetchDoctors());
+  }, [dispatch]);
 
-      return matchesSearch && matchesSpecialty;
-    });
-  }, [search, selectedSpecialty]);
+  // When search changes — detect if it looks like a name or a specialty
+  useEffect(() => {
+    if (!debouncedSearch.trim()) {
+      // Reset: re-fetch based on current specialty filter
+      dispatch(
+        fetchDoctors(
+          selectedSpecialty === "All" ? undefined : selectedSpecialty,
+        ),
+      );
+      return;
+    }
+
+    const isSpecialty = SPECIALTIES.some((s) =>
+      s.toLowerCase().includes(debouncedSearch.toLowerCase()),
+    );
+
+    if (isSpecialty) {
+      // Search by specialization via fetchDoctors
+      dispatch(fetchDoctors(debouncedSearch));
+    } else {
+      // Search by doctor name
+      dispatch(fetchDoctorsByName(debouncedSearch));
+    }
+  }, [debouncedSearch, dispatch]);
+
+  // Specialty filter click
+  const handleSpecialtySelect = (specialty: string) => {
+    setSelectedSpecialty(specialty);
+    setSearch(""); // clear search when filter is clicked
+    dispatch(fetchDoctors(specialty === "All" ? undefined : specialty));
+  };
 
   const handleBook = (doctor: Doctor) => {
     alert(`Booking appointment with ${doctor.name}`);
@@ -148,16 +103,29 @@ export default function FindDoctorPage() {
         <DoctorFilters
           specialties={SPECIALTIES}
           selected={selectedSpecialty}
-          onSelect={setSelectedSpecialty}
+          onSelect={handleSpecialtySelect}
         />
 
-        {/* Grid */}
-        {filtered.length === 0 ? (
+        {/* Loading */}
+        {loading && (
+          <div className="flex justify-center items-center py-16">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {/* Error */}
+        {!loading && error && <p className="text-red-500 text-sm">{error}</p>}
+
+        {/* Empty */}
+        {!loading && !error && doctors.length === 0 && (
           <p className="text-gray-400 text-sm">No doctors found.</p>
-        ) : (
+        )}
+
+        {/* Grid */}
+        {!loading && doctors.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((doc) => (
-              <DoctorCard key={doc.name} doctor={doc} onBook={handleBook} />
+            {doctors.map((doc: Doctor) => (
+              <DoctorCard key={doc.id} doctor={doc} onBook={handleBook} />
             ))}
           </div>
         )}
