@@ -32,7 +32,9 @@ const Recommendation = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Top doctor from API result (shown in the right card)
-  const topDoctor: Doctor | null = result?.doctors?.[0] ?? null;
+  const topDoctor: Doctor | null = result?.doctors?.length
+    ? [...result.doctors].sort((a, b) => b.experience - a.experience)[0]
+    : null;
 
   const getInitials = (name: string) =>
     name
