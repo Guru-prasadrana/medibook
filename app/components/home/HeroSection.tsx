@@ -13,6 +13,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/app/store";
 import { fetchDoctors } from "@/app/store/slices/doctorSlice";
 import { Doctor } from "@/app/types/doctor";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 const Hero = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -162,6 +164,7 @@ const Hero = () => {
 };
 
 const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
+  const router = useRouter();
   return (
     <div className="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-5 border border-gray-100 flex flex-col gap-4">
       <div className="flex items-center gap-4">
@@ -199,9 +202,12 @@ const DoctorCard = ({ doctor }: { doctor: Doctor }) => {
         )}
       </div>
 
-      <button className="mt-auto w-full py-2.5 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-xs font-medium hover:opacity-90 transition shadow-sm">
+      <Button
+        onClick={() => router.push(`/find-doctors/${doctor.id}`)}
+        className="w-full py-3 rounded-xl text-sm font-medium bg-blue-500 hover:bg-blue-600 text-white transition-opacity"
+      >
         Book Appointment
-      </button>
+      </Button>
     </div>
   );
 };

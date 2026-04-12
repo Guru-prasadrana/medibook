@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, X, Loader2 } from "lucide-react";
 import { analyzeSymptomsApi } from "@/lib/services/ai.api";
+import { useRouter } from "next/navigation";
 
 interface Doctor {
   id: number;
@@ -25,6 +26,7 @@ interface AnalyzeResponse {
 }
 
 const Recommendation = () => {
+  const router = useRouter();
   const [symptoms, setSymptoms] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -142,12 +144,18 @@ const Recommendation = () => {
                     <span>• {topDoctor.experience} yrs exp</span>
                     <span>• ${topDoctor.fee}</span>
                   </div>
+                  <Button
+                    className="mt-5 w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => router.push(`/find-doctors/${topDoctor.id}`)}
+                  >
+                    Book Appointment
+                  </Button>
                 </>
               ) : (
                 // ❌ Placeholder content before API response
                 <div className="text-center py-10">
                   <p className="text-gray-400">
-                    Your recommended specialist will appear here.
+                    Your best recommended specialist will appear here.
                   </p>
                 </div>
               )}
@@ -219,7 +227,11 @@ const Recommendation = () => {
                           <span>• ${doc.fee}</span>
                         </div>
                       </div>
-                      <Button size="sm" className="shrink-0">
+                      <Button
+                        size="sm"
+                        className="shrink-0"
+                        onClick={() => router.push(`/find-doctors/${doc.id}`)}
+                      >
                         Book
                       </Button>
                     </div>
