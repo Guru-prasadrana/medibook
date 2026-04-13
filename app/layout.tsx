@@ -19,6 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "MediBook",
   description: "Book doctors easily with MediBook",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
