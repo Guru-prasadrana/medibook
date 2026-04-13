@@ -17,6 +17,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import toast from "react-hot-toast";
+import Image from "next/image";
 const Navbar = () => {
   const router = useRouter();
   const [signInOpen, setSignInOpen] = useState(false);
@@ -61,15 +62,16 @@ const Navbar = () => {
       <header className="w-full border-b bg-white sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-600 text-white">
-              <Calendar size={18} />
-            </div>
-            <span className="text-lg font-semibold text-gray-900">
-              MediBook
-            </span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="logo"
+              width={0}
+              height={0}
+              sizes="100vw"
+              className="h-14 w-auto object-contain rounded-xl"
+            />
           </Link>
-
           {/* Nav Links */}
           <nav className="hidden md:flex items-center gap-8 text-base font-bold">
             {/* ✅ Logged in → /find-doctors | Logged out → show sign in alert */}
